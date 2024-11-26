@@ -2,7 +2,7 @@
 function CartWitget() {
   return (
     <a className="nav-link">
-      <span className="badge text-bg-secondary">4</span>
+      <span className="badge text-bg-secondary"></span>
     </a>
   )
 }
