@@ -1,34 +1,57 @@
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { getProductById } from "../../asyncMock";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../services/firebase";
+import { useCart } from "../../context/CartContext";
 
 export default function ItemDetailContainer() {
-  const { id } = useParams(); // Obtiene el ID desde la URL
   const [product, setProduct] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const { id } = useParams();
+  const { addToCart } = useCart();
 
-  useEffect(() => {
-    getProductById(parseInt(id)) // Obtiene el producto según el ID
-      .then((product) => {
-        setProduct(product);
-      })
-      .catch((error) => console.error("Error al cargar el producto:", error));
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const docRef = doc(db, "productos", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setProduct({ id: docSnap.id, ...docSnap.data() });
+        }
+      } catch (error) {
+        console.error("Error al obtener el producto:", error);
+      }
+    };
+
+    fetchProduct();
   }, [id]);
 
-  if (!product) {
-    return <h2>Cargando producto...</h2>; // Mensaje mientras se carga
-  }
+  if (!product) return <p>Cargando...</p>;
 
   return (
-    <div>
-      <h2>Detalle del Producto</h2>
-      <div style={{ textAlign: "center" }}>
-        <img src={product.img} alt={product.name} style={{ width: "300px" }} />
-        <h3>{product.name}</h3>
-        <p>{product.description}</p>
-        <p>Precio: ${product.price}</p>
+    <div style={{ textAlign: "center", padding: "20px" }}>
+      <h2>{product.name}</h2>
+      <p>{product.description}</p>
+      <p>Precio: ${product.price}</p>
+      <div>
+        <button onClick={() => setQuantity((prev) => Math.max(prev - 1, 1))}>-</button>
+        <span style={{ margin: "0 10px" }}>{quantity}</span>
+        <button onClick={() => setQuantity((prev) => prev + 1)}>+</button>
       </div>
+      <button
+        onClick={() => addToCart(product, quantity)}
+        style={{
+          marginTop: "20px",
+          padding: "10px 20px",
+          backgroundColor: "#007bff",
+          color: "white",
+          border: "none",
+          borderRadius: "5px",
+          cursor: "pointer",
+        }}
+      >
+        Agregar al carrito
+      </button>
     </div>
   );
 }
-
-
